@@ -70,14 +70,17 @@ module "eks" {
   #we uses only 1 security group to allow connection with Fargate, MNG, and Karpenter nodes
   create_node_security_group = false
   eks_managed_node_groups = {
-    initial = {
+    gpu = {
       node_group_name = local.node_group_name
-      instance_types  = ["m5.large"]
+      instance_types  = ["g4dn.xlarge"]
 
       min_size     = 1
       max_size     = 5
-      desired_size = 3
+      desired_size = 1
       subnet_ids   = data.aws_subnets.private.ids
+    }
+    cpu = {
+
     }
   }
 
