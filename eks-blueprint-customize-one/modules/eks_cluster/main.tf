@@ -71,7 +71,7 @@ module "eks" {
   create_node_security_group = false
   eks_managed_node_groups = {
     gpu = {
-      node_group_name = local.node_group_name
+      node_group_name = local.node_group_name_gpu
       instance_types  = ["g4dn.xlarge"]
 
       min_size     = 1
@@ -80,7 +80,13 @@ module "eks" {
       subnet_ids   = data.aws_subnets.private.ids
     }
     cpu = {
+      node_group_name = local.node_group_name_cpu
+      instance_types  = ["t2.small"]
 
+      min_size     = 1
+      max_size     = 5
+      desired_size = 1
+      subnet_ids   = data.aws_subnets.private.ids
     }
   }
 

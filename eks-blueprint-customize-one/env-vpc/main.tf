@@ -8,7 +8,13 @@ locals {
   name   = var.environment_name
   region = var.aws_region
 
-  vpc_cidr       = var.vpc_cidr
+  vpc_cidr       = "10.227.96.0/19" #var.vpc_cidr
+  private_subnets = ["10.227.96.32/27", "10.227.97.32/27", "10.227.98.32/27"]
+  public_subnets = ["10.227.99.192/26","10.227.100.192/26","10.227.101.192/26"]
+  secondary_cidr = ["10.96.0.0/16", "10.97.0.0/16", "10.98.0.0/16"]
+  pod_subnets = ["10.96.0.0/16", "10.97.0.0/16", "10.98.0.0/16"]
+  new_private_subnets = concat(local.private_subnets,local.pod_subnets)
+
   num_of_subnets = min(length(data.aws_availability_zones.available.names), 3)
   azs            = slice(data.aws_availability_zones.available.names, 0, local.num_of_subnets)
 
@@ -20,19 +26,22 @@ locals {
   }
 }
 
-#---------------------------------------------------------------
-# VPC definition
-#---------------------------------------------------------------
+######### OUR VPC #####################
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.0.0"
+  version = "~> 5.5.1"
 
   name = local.name
   cidr = local.vpc_cidr
 
   azs             = local.azs
-  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 6, k)]
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 6, k + 10)]
+#  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 6, k)]
+  public_subnets = local.public_subnets
+#  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 6, k + 10)]
+  private_subnets = local.new_private_subnets
+
+
+  secondary_cidr_blocks = ["10.96.0.0/16", "10.97.0.0/16", "10.98.0.0/16"]
 
   enable_nat_gateway   = true
   create_igw           = true
@@ -58,6 +67,7 @@ module "vpc" {
 
 }
 
+######### ADDITIONAL RESOURCES #####################
 #---------------------------------------------------------------
 # ArgoCD Admin Password credentials with Secrets Manager
 # Login to AWS Secrets manager with the same role as Terraform to extract the ArgoCD admin password with the secret name as "argocd"
@@ -79,4 +89,18 @@ resource "aws_secretsmanager_secret_version" "argocd" {
   secret_string = random_password.argocd.result
 }
 
+######### TAGGING #####################
+#---------------------------------------------------------------
+# terraform destroy -target=module.vpc -auto-approve
+# terraform apply -target=module.vpc -auto-approve
+#---------------------------------------------------------------
+
+module "aws_subnet_tagging" {
+  source       = "../modules/tagging"
+  vpc_id = module.vpc.vpc_id
+  base_name = local.name
+  subnet_cidrs = ["10.96.0.0/16", "10.97.0.0/16", "10.98.0.0/16"]
+  specific_name = "private-gpu"
+  depends_on = [module.vpc]
+}
 

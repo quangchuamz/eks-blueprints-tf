@@ -7,7 +7,7 @@ variable "environment_name" {
 variable "aws_region" {
   description = "AWS Region"
   type        = string
-  default     = "ap-southeast-1"
+  default     = "us-west-2"
 }
 
 variable "vpc_cidr" {

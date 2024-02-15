@@ -14,7 +14,8 @@ locals {
   tag_val_public_subnet  = "${local.environment}-public-"
   tag_val_private_subnet = "${local.environment}-private-"
 
-  node_group_name = "managed-ondemand"
+  node_group_name_gpu = "managed-ondemand_gpu"
+  node_group_name_cpu = "managed-ondemand_cpu"
 
   tags = {
     Blueprint  = local.name
