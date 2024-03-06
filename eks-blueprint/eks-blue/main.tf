@@ -48,7 +48,7 @@ module "eks_cluster" {
 
   aws_region      = var.aws_region
   service_name    = "blue"
-  cluster_version = "1.25"
+  cluster_version = "1.28"
 
   environment_name       = var.environment_name
   eks_admin_role_name    = var.eks_admin_role_name
